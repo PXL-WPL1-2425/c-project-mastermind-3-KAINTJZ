@@ -20,8 +20,9 @@ namespace MasterMind3
     /// </summary>
     public partial class MainWindow : Window
     {
-        private DispatcherTimer timer; // Timer voor vertraging, om de UI te zien bij het begin. => dient voor lijn: 94-120 ( GEBRUIKERS )
+
         private List<string> playerNames = new List<string>();
+        private int currentPlayerIndex = 0;
 
 
         // Lijst van beschikbare kleuren voor het spel
@@ -35,14 +36,10 @@ namespace MasterMind3
             new ColorItem { Name = "Blauw", Color = Colors.Blue }
         };
 
-        // Geheime kleurcombinatie
-        private List<string> secretCode = new List<string>();
 
-        // Door de gebruiker gekozen kleurcombinatie
-        private List<string> userCode = new List<string>();
-
-        // Historie van code 
-        private List<string> attemptsHistory = new List<string>();
+        private List<string> secretCode = new List<string>(); // Geheime kleurcombinatie
+        private List<string> userCode = new List<string>(); // Door de gebruiker gekozen kleurcombinatie
+        private List<string> attemptsHistory = new List<string>(); // Historie van code 
 
 
         // Variabelen gerelateerd aan pogingen
@@ -50,9 +47,7 @@ namespace MasterMind3
         private int currentAttempt = 0;
         private bool gameEnded = false;
         private int maxAttempts = 10;
-
-        //  Score gerelateerde variabele 
-        private int currentScore = 10;
+        private int currentScore = 10; //  Score gerelateerde variabele 
 
 
 
@@ -63,13 +58,69 @@ namespace MasterMind3
         public MainWindow()
         {
             InitializeComponent();
-           
+            InitializePlayers();// Roep aan het begin een functie aan om namen te verzamelen
 
-            // Een timer om spelersnamen te vragen
-            timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromSeconds(1); // Vertraging van 1 seconde
-            timer.Tick += PromptForPlayerNames; // Voeg event toe
-            timer.Start();
+            // Initialiseer ComboBox- en Label-lijsten
+            comboBoxes = new List<ComboBox> { RandomColorComboBox1, RandomColorComboBox2, RandomColorComboBox3, RandomColorComboBox4 };
+            selectedLabels = new List<Label> { SelectedColorLabel1, SelectedColorLabel2, SelectedColorLabel3, SelectedColorLabel4 };
+
+            GenerateRandomKleur(); // Genereer geheime kleurcombinatie
+            PopulateComboBoxesWithColors(); // Vul de ComboBoxen met beschikbare kleuren
+            UpdateAttemptsLabel(); // Werk de pogingen-label bij
+
+        }
+
+
+
+        private void InitializePlayers()
+        {
+            // Vraag het aantal spelers
+            int playerCount = 0;
+            while (playerCount < 2) // Minimum 2 spelers
+            {
+                string input = Microsoft.VisualBasic.Interaction.InputBox("Hoeveel spelers doen mee? (Minimaal 2)", "Aantal spelers");
+                if (int.TryParse(input, out playerCount) && playerCount >= 2)
+                {
+                    break;
+                }
+                MessageBox.Show("Voer een geldig aantal spelers in (minimaal 2).", "Fout", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
+
+            // Verzamel namen van spelers
+            for (int i = 1; i <= playerCount; i++)
+            {
+                string playerName;
+                do
+                {
+                    playerName = Microsoft.VisualBasic.Interaction.InputBox($"Voer de naam in van speler {i}:", "Speler Naam");
+                    if (string.IsNullOrWhiteSpace(playerName))
+                        MessageBox.Show("Naam mag niet leeg zijn. Probeer opnieuw.", "Fout", MessageBoxButton.OK, MessageBoxImage.Warning);
+                } while (string.IsNullOrWhiteSpace(playerName));
+                playerNames.Add(playerName);
+            }
+            MessageBox.Show($"Spelers toegevoegd: {string.Join(", ", playerNames)}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+
+
+        private void EndTurn(string code, bool isSolved, int attempts)
+        {
+            string currentPlayer = playerNames[currentPlayerIndex];
+            string nextPlayer = playerNames[(currentPlayerIndex + 1) % playerNames.Count];
+
+            string messageTitle = currentPlayer;
+            string messageBody = isSolved
+                ? $"Code is gekraakt in {attempts} pogingen.\nNu is speler {nextPlayer} aan de beurt."
+                : $"Je hebt verloren! De correcte code was {code}.\nNu is speler {nextPlayer} aan de beurt.";
+
+            MessageBox.Show(messageBody, messageTitle, MessageBoxButton.OK, MessageBoxImage.Information);
+
+
+            // Update current player index
+            currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.Count;
+            ResetGame();
+            return;
 
 
             // Initialiseer ComboBox- en Label-lijsten
@@ -91,33 +142,7 @@ namespace MasterMind3
         }
 
 
-        // GEBRUIKERS TOEVOEGEN AAN GAME
-        private void PromptForPlayerNames(object sender, EventArgs e)
-        {
-            timer.Stop(); // Stop de timer na de eerste tick
-
-            // Vraag spelersnamen totdat de gebruiker Nee kiest
-            while (true)
-            {
-                string playerName = Microsoft.VisualBasic.Interaction.InputBox("Geef de naam van de speler(s):", "Naam invoeren");
-
-                if (string.IsNullOrWhiteSpace(playerName))
-                {
-                    MessageBox.Show("Spelers toevoegen beëindigd.");
-                    break;
-                }
-
-                playerNames.Add(playerName);
-
-                if (MessageBox.Show("Wil je nog een speler toevoegen?", "Speler toevoegen", MessageBoxButton.YesNo) == MessageBoxResult.No)
-                {
-                    break;
-                }
-            }
-
-            // Toon alle spelersnamen (debugging)
-            MessageBox.Show($"Spelers: {string.Join(", ", playerNames)}", "Spelerslijst");
-        }
+        
 
 
 
