@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace MasterMind3
 {
@@ -19,6 +20,10 @@ namespace MasterMind3
     /// </summary>
     public partial class MainWindow : Window
     {
+        private DispatcherTimer timer; // Timer voor vertraging, om de UI te zien bij het begin. => dient voor lijn: 94-120 ( GEBRUIKERS )
+        private List<string> playerNames = new List<string>();
+
+
         // Lijst van beschikbare kleuren voor het spel
         private readonly List<ColorItem> availableColors = new List<ColorItem>
         {
@@ -58,6 +63,14 @@ namespace MasterMind3
         public MainWindow()
         {
             InitializeComponent();
+           
+
+            // Een timer om spelersnamen te vragen
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromSeconds(1); // Vertraging van 1 seconde
+            timer.Tick += PromptForPlayerNames; // Voeg event toe
+            timer.Start();
+
 
             // Initialiseer ComboBox- en Label-lijsten
             comboBoxes = new List<ComboBox> { RandomColorComboBox1, RandomColorComboBox2, RandomColorComboBox3, RandomColorComboBox4 };
@@ -71,7 +84,44 @@ namespace MasterMind3
 
             // Werk het score bij in het label
             UpdateAttemptsLabel();
+
+
+
+
         }
+
+
+        // GEBRUIKERS TOEVOEGEN AAN GAME
+        private void PromptForPlayerNames(object sender, EventArgs e)
+        {
+            timer.Stop(); // Stop de timer na de eerste tick
+
+            // Vraag spelersnamen totdat de gebruiker Nee kiest
+            while (true)
+            {
+                string playerName = Microsoft.VisualBasic.Interaction.InputBox("Geef de naam van de speler(s):", "Naam invoeren");
+
+                if (string.IsNullOrWhiteSpace(playerName))
+                {
+                    MessageBox.Show("Spelers toevoegen beëindigd.");
+                    break;
+                }
+
+                playerNames.Add(playerName);
+
+                if (MessageBox.Show("Wil je nog een speler toevoegen?", "Speler toevoegen", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                {
+                    break;
+                }
+            }
+
+            // Toon alle spelersnamen (debugging)
+            MessageBox.Show($"Spelers: {string.Join(", ", playerNames)}", "Spelerslijst");
+        }
+
+
+
+
 
         /*==================== Kleurgerelateerde Functies ====================*/
 
@@ -286,6 +336,7 @@ namespace MasterMind3
         }
 
         // Leegt de UI-componenten en reset labels en ComboBoxen
+
         private void ClearUI()
         {
             foreach (var comboBox in comboBoxes)
@@ -349,7 +400,10 @@ namespace MasterMind3
             base.OnClosing(e);
         }
 
-        // Mijn extra is allang gemaakt, ik had al 6 kleuren
+        
+
+
+
 
 
     }
