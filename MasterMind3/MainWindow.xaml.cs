@@ -1,5 +1,4 @@
-﻿
-// MasterMind game by SpicyGames, schoolproject
+﻿// MasterMind game by SpicyGames, schoolproject
 
 using System.Text;
 using System.Windows;
@@ -99,50 +98,15 @@ namespace MasterMind3
                 } while (string.IsNullOrWhiteSpace(playerName));
                 playerNames.Add(playerName);
             }
-            MessageBox.Show($"Spelers toegevoegd: {string.Join(", ", playerNames)}", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show($"Spelers toegevoegd: {string.Join(", ", playerNames)}", "ALLE SPELERS", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
 
 
-        private void EndTurn(string code, bool isSolved, int attempts)
-        {
-            string currentPlayer = playerNames[currentPlayerIndex];
-            string nextPlayer = playerNames[(currentPlayerIndex + 1) % playerNames.Count];
-
-            string messageTitle = currentPlayer;
-            string messageBody = isSolved
-                ? $"Code is gekraakt in {attempts} pogingen.\nNu is speler {nextPlayer} aan de beurt."
-                : $"Je hebt verloren! De correcte code was {code}.\nNu is speler {nextPlayer} aan de beurt.";
-
-            MessageBox.Show(messageBody, messageTitle, MessageBoxButton.OK, MessageBoxImage.Information);
-
-
-            // Update current player index
-            currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.Count;
-            ResetGame();
-            return;
-
-
-            // Initialiseer ComboBox- en Label-lijsten
-            comboBoxes = new List<ComboBox> { RandomColorComboBox1, RandomColorComboBox2, RandomColorComboBox3, RandomColorComboBox4 };
-            selectedLabels = new List<Label> { SelectedColorLabel1, SelectedColorLabel2, SelectedColorLabel3, SelectedColorLabel4 };
-
-            // Genereer een willekeurige geheime kleurcombinatie
-            GenerateRandomKleur();
-
-            // Vul de ComboBoxen met beschikbare kleuren
-            PopulateComboBoxesWithColors();
-
-            // Werk het score bij in het label
-            UpdateAttemptsLabel();
 
 
 
 
-        }
-
-
-        
 
 
 
@@ -197,19 +161,67 @@ namespace MasterMind3
         }
 
 
-        // Vermindert het aantal resterende pogingen en controleert op game over
-        private void ReduceAttempts()
+
+        // Beurtenwissel functie voor spelers
+        private void ProcessPlayerTurn()
         {
             currentAttempt++;
             UpdateAttemptsLabel();
 
-            if (currentAttempt >= maxAttempts && !gameEnded)
+            if (currentAttempt >= maxAttempts) // Controleer op maximale pogingen
             {
-                // Toon een game over-bericht en reset het spel
-                MessageBox.Show($"Je hebt verloren! De geheime code was: {string.Join(", ", secretCode)}", "Game Over", MessageBoxButton.OK, MessageBoxImage.Information);
-                EndGame(false);
+                string currentPlayerName = playerNames[currentPlayerIndex];
+                string nextPlayerName = playerNames[(currentPlayerIndex + 1) % playerNames.Count];
+
+                // Toon melding voor verlies
+                MessageBox.Show(
+                    $"Jammer, {currentPlayerName}, je hebt verloren! De geheime code was: {string.Join(", ", secretCode)}. Nu is speler {nextPlayerName} aan de beurt.",
+                    currentPlayerName,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
+
+                // Wissel van speler
+                currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.Count;
+
+                // Reset het spel voor de volgende speler
+                ResetGame();
+            }
+            else
+            {
+                CheckCombinationAndHandleResult();
             }
         }
+
+        // Controleer de ingevoerde combinatie en handel het resultaat af
+        private void CheckCombinationAndHandleResult()
+        {
+            // Haal de door de speler gekozen kleurencombinatie op
+            var playerCombination = comboBoxes
+                .Select(cb => (cb.SelectedItem as ColorItem)?.Name ?? "")
+                .ToList();
+
+            if (playerCombination.SequenceEqual(secretCode)) // Vergelijk met de geheime code
+            {
+                string currentPlayerName = playerNames[currentPlayerIndex];
+                string nextPlayerName = playerNames[(currentPlayerIndex + 1) % playerNames.Count];
+
+                // Toon melding voor correcte combinatie
+                MessageBox.Show(
+                    $"Code gekraakt in {currentAttempt} pogingen.\nNu is speler {nextPlayerName} aan de beurt.",
+                    currentPlayerName,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
+
+                // Wissel van speler en reset de beurt
+                currentPlayerIndex = (currentPlayerIndex + 1) % playerNames.Count;
+                ResetGame();
+            }
+          
+        }
+
+
 
         /*==================== Pogingen Geschiedenis ====================*/
 
@@ -327,15 +339,7 @@ namespace MasterMind3
             UpdateScoreLabel();
 
 
-            if (allCorrect) // Als alle kleuren correct zijn, wint de gebruiker
-            {
-                MessageBox.Show("Gefeliciteerd! Je hebt de geheime code geraden!", "Winnaar", MessageBoxButton.OK, MessageBoxImage.Information);
-                EndGame(true);
-            }
-            else
-            {
-                ReduceAttempts(); // Anders, verminder pogingen
-            }
+
         }
 
         // Stelt de randkleur in voor het label dat aan de opgegeven index is gekoppeld
@@ -378,24 +382,7 @@ namespace MasterMind3
             UpdateAttemptsLabel();
         }
 
-        // Melding als de game is gewonnen of verloren:
-        private void EndGame(bool isWin)
-        {
-            gameEnded = true;
 
-            string message = isWin ? "Wil je opnieuw spelen?" : $"Je hebt verloren! De geheime code was: {string.Join(", ", secretCode)}. Wil je opnieuw spelen?";
-
-            MessageBoxResult result = MessageBox.Show(message, "Einde spel", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                ResetGame();
-            }
-            else
-            {
-                Close();
-            }
-        }
 
 
 
@@ -425,7 +412,7 @@ namespace MasterMind3
             base.OnClosing(e);
         }
 
-        
+
 
 
 

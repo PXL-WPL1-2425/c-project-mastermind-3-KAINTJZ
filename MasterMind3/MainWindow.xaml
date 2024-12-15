@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MasterMind3"
         mc:Ignorable="d"
-        Title="MainWindow" 
+        Title="MasterMind 3" 
         Height="450" Width="500" MinHeight="450" MinWidth="500" SizeToContent="Manual" 
         Background="#FF272E35">
     <Window.Resources>
